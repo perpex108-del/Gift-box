@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gift</title>
+<style>
+  :root{
+    --bg:#05050a;
+    --glow:#ff2e6e;
+    --glow2:#ffb703;
+    --text:#f4f4f4;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    height:100%; margin:0; padding:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    overflow:hidden;
+    user-select:none;
+    touch-action:none;
+  }
+  #app{
+    position:relative;
+    width:100%;
+    height:100vh;
+    height:100dvh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    text-align:center;
+    padding:24px;
+  }
+  .stage{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .5s ease;
+  }
+  .stage.active{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  h1{
+    font-size:1.5rem;
+    font-weight:600;
+    margin:0 0 8px;
+    letter-spacing:.5px;
+  }
+  p.sub{
+    color:#999;
+    font-size:.95rem;
+    margin:0 0 32px;
+  }
+  .hint{
+    margin-top:28px;
+    font-size:.85rem;
+    color:#777;
+    animation:pulse 1.6s infinite ease-in-out;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:.4}
+    50%{opacity:1}
+  }
+
+  /* ---------- STAGE 1: box ---------- */
+  .box-wrap{
+    width:170px; height:170px;
+    display:flex; align-items:center; justify-content:center;
+    animation:float 2.4s ease-in-out infinite;
+    filter:drop-shadow(0 0 25px rgba(255,46,110,.35));
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-10px)}
+  }
+  .box{
+    font-size:6.5rem;
+    animation:heartbeat 1.8s ease-in-out infinite;
+  }
+  @keyframes heartbeat{
+    0%,100%{transform:scale(1)}
+    25%{transform:scale(1.06)}
+    40%{transform:scale(0.98)}
+    55%{transform:scale(1.05)}
+  }
+
+  /* ---------- STAGE 2: trembling / cracking ---------- */
+  .box-tremble{
+    font-size:6.5rem;
+    animation:tremble .12s infinite;
+    filter:drop-shadow(0 0 40px var(--glow));
+  }
+  @keyframes tremble{
+    0%{transform:translate(0,0) rotate(0deg)}
+    25%{transform:translate(-4px,2px) rotate(-3deg)}
+    50%{transform:translate(4px,-2px) rotate(3deg)}
+    75%{transform:translate(-3px,-3px) rotate(-2deg)}
+    100%{transform:translate(3px,3px) rotate(2deg)}
+  }
+  .crack-light{
+    position:absolute;
+    inset:0;
+    background:radial-gradient(circle at center, rgba(255,183,3,.25), transparent 60%);
+    animation:flicker .3s infinite;
+    pointer-events:none;
+  }
+  @keyframes flicker{
+    0%,100%{opacity:.3}
+    50%{opacity:.8}
+  }
+
+  /* ---------- STAGE 3: ribbon swipe ---------- */
+  .ribbon-area{
+    width:280px;
+    max-width:80vw;
+    height:70px;
+    border:2px solid #333;
+    border-radius:40px;
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(90deg,#111,#1a1a1a);
+    box-shadow:0 0 25px rgba(255,46,110,.25) inset;
+  }
+  .ribbon-fill{
+    position:absolute;
+    top:0; left:0; bottom:0;
+    width:0%;
+    background:linear-gradient(90deg,var(--glow),var(--glow2));
+    transition:width .05s linear;
+  }
+  .ribbon-knob{
+    position:absolute;
+    top:5px; left:5px;
+    width:58px; height:58px;
+    border-radius:50%;
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.6rem;
+    box-shadow:0 0 15px rgba(0,0,0,.5);
+    touch-action:none;
+    cursor:grab;
+    transition:left .25s ease;
+  }
+  .ribbon-label{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.85rem;
+    color:#888;
+    letter-spacing:1px;
+    pointer-events:none;
+  }
+
+  /* ---------- STAGE 4: flash / static ---------- */
+  .static{
+    width:100%; height:100%;
+    position:absolute; inset:0;
+    background:#000;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .static.flashing{
+    animation:strobe .1s steps(1) infinite;
+  }
+  @keyframes strobe{
+    0%{background:#000}
+    50%{background:#fff}
+    100%{background:#000}
+  }
+  .static-text{
+    color:#fff;
+    font-size:1.4rem;
+    font-weight:700;
+    text-shadow:0 0 10px red;
+    animation:jitter .1s infinite;
+  }
+  @keyframes jitter{
+    0%{transform:translate(0,0)}
+    25%{transform:translate(-2px,1px)}
+    50%{transform:translate(2px,-1px)}
+    75%{transform:translate(-1px,-2px)}
+  }
+
+  /* ---------- STAGE 5: blurry silhouette / countdown ---------- */
+  .reveal-frame{
+    width:min(85vw,340px);
+    height:min(85vw,340px);
+    border-radius:16px;
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 0 60px rgba(255,46,110,.4);
+    background:#111;
+  }
+  .reveal-frame img{
+    width:100%; height:100%;
+    object-fit:cover;
+    filter:blur(28px) brightness(.5);
+    transform:scale(1.15);
+    transition:filter 1s ease, transform 1s ease, brightness 1s ease;
+  }
+  .reveal-frame img.sharpen{
+    filter:blur(6px) brightness(.8);
+  }
+  .countdown{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:4rem;
+    font-weight:800;
+    color:#fff;
+    text-shadow:0 0 20px var(--glow);
+  }
+
+  /* ---------- FINAL: full reveal ---------- */
+  .final-img-wrap{
+    width:100%;
+    height:100%;
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#000;
+  }
+  .final-img-wrap img{
+    max-width:92%;
+    max-height:80vh;
+    border-radius:12px;
+    box-shadow:0 0 80px rgba(255,255,255,.25);
+    transform:scale(0.4);
+    opacity:0;
+  }
+  .final-img-wrap img.pop{
+    animation:bang .45s cubic-bezier(.25,1.6,.4,1) forwards;
+  }
+  @keyframes bang{
+    0%{transform:scale(0.3); opacity:0}
+    60%{transform:scale(1.12); opacity:1}
+    100%{transform:scale(1); opacity:1}
+  }
+  .shake{
+    animation:shakeScreen .4s ease;
+  }
+  @keyframes shakeScreen{
+    0%,100%{transform:translate(0,0)}
+    20%{transform:translate(-10px,6px)}
+    40%{transform:translate(10px,-6px)}
+    60%{transform:translate(-8px,-4px)}
+    80%{transform:translate(8px,4px)}
+  }
+  .final-caption{
+    position:absolute;
+    bottom:6%;
+    font-size:1.1rem;
+    font-weight:700;
+    color:#fff;
+    text-shadow:0 0 10px #000;
+  }
+
+  .flash-white{
+    position:fixed;
+    inset:0;
+    background:#fff;
+    z-index:50;
+    opacity:0;
+    pointer-events:none;
+  }
+  .flash-white.go{
+    animation:flashWhite .35s ease;
+  }
+  @keyframes flashWhite{
+    0%{opacity:0}
+    15%{opacity:1}
+    100%{opacity:0}
+  }
+
+  .replay-btn{
+    margin-top:22px;
+    background:transparent;
+    border:1px solid #444;
+    color:#aaa;
+    padding:10px 18px;
+    border-radius:24px;
+    font-size:.85rem;
+    cursor:pointer;
+  }
+
+  /* ---------- STAGE 6: swipe-left curtain ---------- */
+  .swipe-area{
+    width:100%;
+    height:100%;
+    position:relative;
+    overflow:hidden;
+    touch-action:none;
+  }
+  .swipe-panel{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(135deg,#111,#000 70%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    cursor:grab;
+  }
+  .swipe-arrow{
+    font-size:2.6rem;
+    color:var(--glow);
+    animation:arrowNudge 1.1s ease-in-out infinite;
+  }
+  @keyframes arrowNudge{
+    0%,100%{transform:translateX(0); opacity:.6}
+    50%{transform:translateX(-18px); opacity:1}
+  }
+  .swipe-text{
+    font-size:1rem;
+    letter-spacing:2px;
+    color:#ccc;
+    font-weight:600;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- STAGE 1 -->
+  <div class="stage active" id="stage1">
+    <div class="box-wrap"><div class="box">🎁</div></div>
+    <h1>Something's inside...</h1>
+    <p class="sub">Tap the box if you dare</p>
+    <div class="hint">tap anywhere</div>
+  </div>
+
+  <!-- STAGE 2 -->
+  <div class="stage" id="stage2">
+    <div class="crack-light"></div>
+    <div class="box-tremble">🎁</div>
+    <h1 style="margin-top:26px;">It's waking up...</h1>
+    <p class="sub">Hold on tight</p>
+  </div>
+
+  <!-- STAGE 3 -->
+  <div class="stage" id="stage3">
+    <h1>Swipe to open</h1>
+    <p class="sub">Drag the knob all the way to the right</p>
+    <div class="ribbon-area" id="ribbonArea">
+      <div class="ribbon-fill" id="ribbonFill"></div>
+      <div class="ribbon-label" id="ribbonLabel">SWIPE →</div>
+      <div class="ribbon-knob" id="ribbonKnob">🔒</div>
+    </div>
+  </div>
+
+  <!-- STAGE 4 -->
+  <div class="stage" id="stage4">
+    <div class="static" id="staticEl">
+      <div class="static-text" id="staticText">wait... what is that?</div>
+    </div>
+  </div>
+
+  <!-- STAGE 5 -->
+  <div class="stage" id="stage5">
+    <div class="reveal-frame" id="revealFrame">
+      <div class="countdown" id="countdownEl">3</div>
+    </div>
+  </div>
+
+  <!-- STAGE 6: swipe left to reveal -->
+  <div class="stage" id="stage6">
+    <div class="swipe-area" id="swipeArea">
+      <div class="swipe-panel" id="swipePanel">
+        <div class="swipe-arrow">⟵</div>
+        <div class="swipe-text">SWIPE LEFT TO REVEAL</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div class="stage" id="stageFinal">
+    <div class="final-img-wrap">
+      <img src="51S3DhVCdxL.jpg" id="finalImg" alt="surprise">
+      <div class="final-caption" id="finalCaption"></div>
+    </div>
+    <button class="replay-btn" id="replayBtn" style="position:absolute; bottom:4%;">watch again</button>
+  </div>
+
+</div>
+
+<div class="flash-white" id="flashWhite"></div>
+
+<script>
+(function(){
+  const app = document.getElementById('app');
+  const stages = {
+    1: document.getElementById('stage1'),
+    2: document.getElementById('stage2'),
+    3: document.getElementById('stage3'),
+    4: document.getElementById('stage4'),
+    5: document.getElementById('stage5'),
+    6: document.getElementById('stage6'),
+    final: document.getElementById('stageFinal')
+  };
+
+  function goTo(key){
+    Object.values(stages).forEach(s => s.classList.remove('active'));
+    stages[key].classList.add('active');
+  }
+
+  // ---------- STAGE 1 -> 2 ----------
+  stages[1].addEventListener('click', () => {
+    goTo(2);
+    setTimeout(() => { goTo(3); }, 1800);
+  }, {once:true});
+
+  // ---------- STAGE 3: ribbon swipe ----------
+  const knob = document.getElementById('ribbonKnob');
+  const area = document.getElementById('ribbonArea');
+  const fill = document.getElementById('ribbonFill');
+  const label = document.getElementById('ribbonLabel');
+  let dragging = false;
+  let maxX = 0;
+  let opened = false;
+
+  function setKnobX(x){
+    knob.style.left = x + 'px';
+    const pct = Math.max(0, Math.min(1, x / maxX));
+    fill.style.width = (pct*100) + '%';
+    label.style.opacity = 1 - pct;
+  }
+
+  function calcMax(){
+    maxX = area.clientWidth - knob.clientWidth - 10;
+  }
+  calcMax();
+  window.addEventListener('resize', calcMax);
+
+  function startDrag(clientX){
+    if(opened) return;
+    dragging = true;
+    knob.style.transition = 'none';
+  }
+  function moveDrag(clientX){
+    if(!dragging || opened) return;
+    const rect = area.getBoundingClientRect();
+    let x = clientX - rect.left - knob.clientWidth/2;
+    x = Math.max(5, Math.min(maxX, x));
+    setKnobX(x);
+  }
+  function endDrag(){
+    if(!dragging || opened) return;
+    dragging = false;
+    knob.style.transition = 'left .25s ease';
+    const rect = area.getBoundingClientRect();
+    const knobLeft = parseFloat(knob.style.left || 5);
+    if(knobLeft >= maxX - 6){
+      opened = true;
+      knob.textContent = '🔓';
+      setTimeout(() => {
+        goTo(4);
+        runStaticSequence();
+      }, 300);
+    } else {
+      setKnobX(5);
+    }
+  }
+
+  knob.addEventListener('mousedown', e => startDrag(e.clientX));
+  window.addEventListener('mousemove', e => moveDrag(e.clientX));
+  window.addEventListener('mouseup', endDrag);
+
+  knob.addEventListener('touchstart', e => { startDrag(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('touchmove', e => { moveDrag(e.touches[0].clientX); }, {passive:true});
+  window.addEventListener('touchend', endDrag);
+
+  // ---------- STAGE 4: static/flash then move to 5 ----------
+  function runStaticSequence(){
+    const staticEl = document.getElementById('staticEl');
+    staticEl.classList.add('flashing');
+    setTimeout(() => {
+      staticEl.classList.remove('flashing');
+      goTo(5);
+      runSilhouetteSequence();
+    }, 900);
+  }
+
+  // ---------- STAGE 5: countdown only, no image preview ----------
+  function runSilhouetteSequence(){
+    const countdownEl = document.getElementById('countdownEl');
+    let count = 3;
+    countdownEl.textContent = count;
+
+    const interval = setInterval(() => {
+      count--;
+      if(count > 0){
+        countdownEl.textContent = count;
+      } else {
+        clearInterval(interval);
+        countdownEl.textContent = '';
+        goTo(6);
+        setupSwipeStage();
+      }
+    }, 900);
+  }
+
+  // ---------- STAGE 6: swipe left, full swipe only ----------
+  function setupSwipeStage(){
+    const area = document.getElementById('swipeArea');
+    const panel = document.getElementById('swipePanel');
+    let startX = null;
+    let currentX = 0;
+    let dragging = false;
+    let done = false;
+    const threshold = () => area.clientWidth * 0.55;
+
+    function onStart(x){
+      if(done) return;
+      dragging = true;
+      startX = x;
+      panel.style.transition = 'none';
+    }
+    function onMove(x){
+      if(!dragging || done) return;
+      let dx = x - startX;
+      dx = Math.min(0, dx); // only allow leftward drag
+      currentX = dx;
+      panel.style.transform = `translateX(${dx}px)`;
+      panel.style.opacity = String(1 - Math.min(1, Math.abs(dx) / (area.clientWidth*0.9)) * 0.4);
+    }
+    function onEnd(){
+      if(!dragging || done) return;
+      dragging = false;
+      panel.style.transition = 'transform .25s ease, opacity .25s ease';
+      if(Math.abs(currentX) >= threshold()){
+        done = true;
+        panel.style.transform = `translateX(-100%)`;
+        panel.style.opacity = '0';
+        setTimeout(triggerFinal, 220);
+      } else {
+        panel.style.transform = 'translateX(0)';
+        panel.style.opacity = '1';
+      }
+      currentX = 0;
+    }
+
+    panel.addEventListener('mousedown', e => onStart(e.clientX));
+    window.addEventListener('mousemove', e => onMove(e.clientX));
+    window.addEventListener('mouseup', onEnd);
+
+    panel.addEventListener('touchstart', e => onStart(e.touches[0].clientX), {passive:true});
+    window.addEventListener('touchmove', e => onMove(e.touches[0].clientX), {passive:true});
+    window.addEventListener('touchend', onEnd);
+  }
+
+  // ---------- FINAL: bang reveal ----------
+  function triggerFinal(){
+    const flash = document.getElementById('flashWhite');
+    flash.classList.add('go');
+
+    setTimeout(() => {
+      goTo('final');
+      app.classList.add('shake');
+      const finalImg = document.getElementById('finalImg');
+      finalImg.classList.add('pop');
+      setTimeout(() => app.classList.remove('shake'), 400);
+      setTimeout(() => flash.classList.remove('go'), 400);
+    }, 150);
+  }
+
+  // ---------- REPLAY ----------
+  document.getElementById('replayBtn').addEventListener('click', () => {
+    location.reload();
+  });
+
+})();
+</script>
+
+</body>
+</html>
